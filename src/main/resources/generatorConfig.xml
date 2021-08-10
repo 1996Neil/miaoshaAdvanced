@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE generatorConfiguration
+        PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN"
+        "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd">
+<generatorConfiguration>
+    <!--context目录下jdbcConnection所需要的配置信息,已完成-->
+    <properties resource="generator.properties"/>
+    <!--    默认是mybatis3,会生成simple方法,flat是一个表一个对象类-->
+    <context id="MysqlContext" targetRuntime="Mybatis3" defaultModelType="flat">
+        <!--        自动分隔符的配置信息-->
+        <property name="autoDelimitKeywords" value="true"/>
+        <property name="beginningDelimiter" value="`"/>
+        <property name="endingDelimiter" value="`"/>
+        <property name="javaFileEncoding" value="UTF-8"/>
+        <!--        序列化插件和pojo对象生成toString方法插件-->
+        <plugin type="org.mybatis.generator.plugins.SerializablePlugin"/>
+        <plugin type="org.mybatis.generator.plugins.ToStringPlugin"/>
+        <!--生成mapper.xml时覆盖原文件-->
+        <plugin type="org.mybatis.generator.plugins.UnmergeableXmlMappersPlugin"/>
+
+        <!--自动注释生成器,配置完成-->
+        <commentGenerator type="com.example.myspikeAdvanced.mbg.CommentGenerator">
+            <!--    不要时间戳,不要数据库备注信息,这里的不要就是指不要系统自己生成的-->
+            <property name="suppressDate" value="true"/>
+            <property name="addRemarkComments" value="true"/>
+        </commentGenerator>
+        <jdbcConnection driverClass="${jdbc.driver-class-name}"
+                        connectionURL="${jdbc.url}"
+                        userId="${jdbc.username}"
+                        password="${jdbc.password}">
+            <!--解决mysql驱动升级到8.0后不生成指定数据库代码的问题-->
+            <property name="nullCatalogMeansCurrent" value="true"/>
+        </jdbcConnection>
+        <!--        指定生成model的路径-->
+        <javaModelGenerator targetPackage="com.example.myspikeAdvanced.mbg.dao.dataObject"
+                            targetProject="src/main/java" >
+            <!--能够生成子包-->
+            <property name="enableSubPackages" value="true"/>
+            <property name="trimStrings" value="true"/>
+        </javaModelGenerator>
+        <!--        指定生成mapper.xml的路径 bug修复-->
+        <sqlMapGenerator targetPackage="mapper" targetProject="src/main/resources"/>
+        <!--        指定生成mapper接口的路径,同时启用纯xml写sql方法-->
+        <javaClientGenerator type="XMLMAPPER" targetPackage="com.example.myspikeAdvanced.mbg.mapper"
+                             targetProject="src/main/java">
+            <property name="enableSubPackages" value="true"/>
+        </javaClientGenerator>
+        <!--        生成全部表 ，要生成什么表自己写,在插入数据后获取自增列true-->
+<!--        <table tableName="user_info" domainObjectName="UserDO" enableCountByExample="false"-->
+<!--        enableUpdateByExample="false" enableDeleteByExample="false" enableSelectByExample="false"-->
+<!--        selectByExampleQueryId="false">-->
+<!--            <generatedKey column="id" sqlStatement="Mysql" identity="true"/>-->
+<!--        </table>-->
+        <!--        去掉了mapper.xml里面一些复杂语句-->
+<!--        <table tableName="user_password" domainObjectName="UserPasswordDO" enableCountByExample="false"-->
+<!--               enableUpdateByExample="false" enableDeleteByExample="false" enableSelectByExample="false"-->
+<!--               selectByExampleQueryId="false">-->
+<!--        &lt;!&ndash;用来指定自动生成主键的属性，见mybaits入门到精通 P106&ndash;&gt;-->
+<!--        <generatedKey column="id" sqlStatement="Mysql" identity="true"/>-->
+<!--        </table>-->
+
+        <table tableName="promo" domainObjectName="PromoDO" enableCountByExample="false"
+               enableUpdateByExample="false" enableDeleteByExample="false" enableSelectByExample="false"
+               selectByExampleQueryId="false">
+            <generatedKey column="id" sqlStatement="Mysql" identity="true"/>
+        </table>
+    </context>
+</generatorConfiguration>
