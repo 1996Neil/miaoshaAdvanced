@@ -1,6 +1,5 @@
 package com.example.myspikeAdvanced.controller;
 
-import com.example.myspikeAdvanced.controller.viewObject.BaseController;
 import com.example.myspikeAdvanced.error.BusinessException;
 import com.example.myspikeAdvanced.error.EmBusinessError;
 import com.example.myspikeAdvanced.response.CommonResultType;

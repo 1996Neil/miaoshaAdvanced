@@ -1,7 +1,6 @@
 package com.example.myspikeAdvanced.controller;
 
 import com.alibaba.druid.util.StringUtils;
-import com.example.myspikeAdvanced.controller.viewObject.BaseController;
 import com.example.myspikeAdvanced.controller.viewObject.UserVO;
 import com.example.myspikeAdvanced.error.BusinessException;
 import com.example.myspikeAdvanced.error.EmBusinessError;

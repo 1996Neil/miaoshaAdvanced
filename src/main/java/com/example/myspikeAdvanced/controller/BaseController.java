@@ -1,4 +1,4 @@
-package com.example.myspikeAdvanced.controller.viewObject;
+package com.example.myspikeAdvanced.controller;
 
 import com.example.myspikeAdvanced.error.BusinessException;
 import com.example.myspikeAdvanced.error.EmBusinessError;
@@ -39,24 +39,24 @@ public class BaseController {
      * @return java.lang.Object
      * @Date 12:58 2021/8/4
      **/
-    @ExceptionHandler(Exception.class)
-    @ResponseStatus(HttpStatus.OK)
-    public Object handlerException(HttpServletRequest httpServletRequest, Exception ex) {
-        //1.把异常传入通用处理对象返回 状态"fail",data (10001,"用户不存在")
-        //CommonResultType commonResultType = new CommonResultType();
-        //commonResultType.setStatus("fail");
-        //commonResultType.setData(ex);
-        Map<String, Object> responseData = new HashMap<>();
-        if (ex instanceof BusinessException) {
-            //2.因为返回的是Exception的json序列化,所以我们要强转成BusinessException来进行处理
-            BusinessException businessException = (BusinessException) ex;
-            responseData.put("errCode", businessException.getErrCode());
-            responseData.put("errMsg", businessException.getErrMsg());
-        } else {
-            //这里为什么不直接返回UNKNOWN_ERROR呢,因为ResponseBody会自动序列化,达不到我们需要的键值对的需求
-            responseData.put("errCode", EmBusinessError.UNKNOWN_ERROR.getErrCode());
-            responseData.put("errMsg", EmBusinessError.UNKNOWN_ERROR.getErrMsg());
-        }
-        return CommonResultType.create(responseData, "fail");
-    }
+    //@ExceptionHandler(Exception.class)
+    //@ResponseStatus(HttpStatus.OK)
+    //public Object handlerException(HttpServletRequest httpServletRequest, Exception ex) {
+    //    //1.把异常传入通用处理对象返回 状态"fail",data (10001,"用户不存在")
+    //    //CommonResultType commonResultType = new CommonResultType();
+    //    //commonResultType.setStatus("fail");
+    //    //commonResultType.setData(ex);
+    //    Map<String, Object> responseData = new HashMap<>();
+    //    if (ex instanceof BusinessException) {
+    //        //2.因为返回的是Exception的json序列化,所以我们要强转成BusinessException来进行处理
+    //        BusinessException businessException = (BusinessException) ex;
+    //        responseData.put("errCode", businessException.getErrCode());
+    //        responseData.put("errMsg", businessException.getErrMsg());
+    //    } else {
+    //        //这里为什么不直接返回UNKNOWN_ERROR呢,因为ResponseBody会自动序列化,达不到我们需要的键值对的需求
+    //        responseData.put("errCode", EmBusinessError.UNKNOWN_ERROR.getErrCode());
+    //        responseData.put("errMsg", EmBusinessError.UNKNOWN_ERROR.getErrMsg());
+    //    }
+    //    return CommonResultType.create(responseData, "fail");
+    //}
 }
