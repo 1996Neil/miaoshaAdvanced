@@ -2,6 +2,7 @@ package com.example.myspikeAdvanced.service.model;
 
 import lombok.Data;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 /**
@@ -12,7 +13,7 @@ import java.math.BigDecimal;
  * @description
  */
 @Data
-public class OrderModel {
+public class OrderModel implements Serializable {
     /**
      * 交易流水号
      **/

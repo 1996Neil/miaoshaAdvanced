@@ -5,6 +5,7 @@ import lombok.Data;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 /**
@@ -15,7 +16,7 @@ import java.math.BigDecimal;
  * @description 领域模型,在开发中往往是先设计除领域模型再设计数据库模型
  */
 @Data
-public class ItemModel {
+public class ItemModel implements Serializable {
 
     /**
      * 商品id

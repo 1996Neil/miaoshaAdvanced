@@ -3,6 +3,7 @@ package com.example.myspikeAdvanced.service.model;
 import lombok.Data;
 import org.joda.time.DateTime;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 /**
@@ -13,7 +14,7 @@ import java.math.BigDecimal;
  * @description
  */
 @Data
-public class PromoModel {
+public class PromoModel implements Serializable {
 
     private Integer id;
     /**
