@@ -10,10 +10,13 @@ import com.example.myspikeAdvanced.service.model.ItemModel;
 import org.joda.time.format.DateTimeFormat;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -32,6 +35,10 @@ public class ItemController extends BaseController {
     private ItemService itemService;
     @Autowired
     private PromoDOMapper promoDOMapper;
+    @Autowired
+    private RedisTemplate redisTemplate;
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
 
     @PostMapping(value = "/create", consumes = {CONTENT_TYPE_FORMED})
     public CommonResultType createItem(@RequestParam("title") String title,
@@ -80,7 +87,15 @@ public class ItemController extends BaseController {
      **/
     @GetMapping("/get")
     public CommonResultType getItem(@RequestParam("id") Integer id) {
-        ItemModel itemModel = itemService.getItemById(id);
+        //根据商品id到redis中获取value
+        ItemModel itemModel = (ItemModel) redisTemplate.opsForValue().get("item_" + id);
+        if (itemModel==null) {
+            itemModel = itemService.getItemById(id);
+            //将查询到的用户商品信息存入reids并设置过期时间
+            redisTemplate.opsForValue().set("item_"+id,itemModel);
+            redisTemplate.expire("item_"+id,10, TimeUnit.MINUTES);
+        }
+
         ItemVO itemVO = this.covertVOFromItemModel(itemModel);
         return CommonResultType.create(itemVO);
     }
