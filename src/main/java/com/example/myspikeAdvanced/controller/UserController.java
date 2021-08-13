@@ -9,6 +9,7 @@ import com.example.myspikeAdvanced.service.UserService;
 import com.example.myspikeAdvanced.service.model.UserModel;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 import sun.misc.BASE64Encoder;
 
@@ -17,6 +18,8 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Random;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -36,6 +39,8 @@ public class UserController extends BaseController {
 
     @Autowired
     private HttpServletRequest httpServletRequest;
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     /**
      * 用户注册接口
@@ -158,9 +163,14 @@ public class UserController extends BaseController {
         //用户登录服务,用来校验用户登录是否合法
         UserModel userModel = userService.validateLogin(telephone, this.EncodeByMd5(password));
 
-        //将登录凭证加入到用户登录成功的session内,在这里假设用户是单点session登录
-        this.httpServletRequest.getSession().setAttribute("IS_LOGIN", true);
-        this.httpServletRequest.getSession().setAttribute("LOGIN_USER", userModel);
-        return CommonResultType.create(null);
+
+        //修改成若用户登录验证成功后将对应的登录信息和登录凭证一起存入redis中
+        String uuidToken = UUID.randomUUID().toString();
+        uuidToken = uuidToken.replace("-", "");
+        //把token存入redis,同时设置过期时间
+        redisTemplate.opsForValue().set(uuidToken,userModel);
+        redisTemplate.expire(uuidToken,1, TimeUnit.HOURS);
+        //下发token
+        return CommonResultType.create(uuidToken);
     }
 }
