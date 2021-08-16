@@ -5,6 +5,7 @@ import com.example.myspikeAdvanced.error.BusinessException;
 import com.example.myspikeAdvanced.mbg.dao.dataObject.PromoDO;
 import com.example.myspikeAdvanced.mbg.mapper.PromoDOMapper;
 import com.example.myspikeAdvanced.response.CommonResultType;
+import com.example.myspikeAdvanced.service.CacheService;
 import com.example.myspikeAdvanced.service.ItemService;
 import com.example.myspikeAdvanced.service.model.ItemModel;
 import org.joda.time.format.DateTimeFormat;
@@ -38,7 +39,7 @@ public class ItemController extends BaseController {
     @Autowired
     private RedisTemplate redisTemplate;
     @Autowired
-    private StringRedisTemplate stringRedisTemplate;
+    private CacheService cacheService;
 
     @PostMapping(value = "/create", consumes = {CONTENT_TYPE_FORMED})
     public CommonResultType createItem(@RequestParam("title") String title,
@@ -87,15 +88,21 @@ public class ItemController extends BaseController {
      **/
     @GetMapping("/get")
     public CommonResultType getItem(@RequestParam("id") Integer id) {
-        //根据商品id到redis中获取value
-        ItemModel itemModel = (ItemModel) redisTemplate.opsForValue().get("item_" + id);
+        ItemModel itemModel = null;
+        //先取本地缓存
+        itemModel = (ItemModel) cacheService.getFromCommonCache("item_" + id);
         if (itemModel==null) {
-            itemModel = itemService.getItemById(id);
-            //将查询到的用户商品信息存入reids并设置过期时间
-            redisTemplate.opsForValue().set("item_"+id,itemModel);
-            redisTemplate.expire("item_"+id,10, TimeUnit.MINUTES);
+            //根据商品id到redis中获取value
+            itemModel = (ItemModel) redisTemplate.opsForValue().get("item_" + id);
+            if (itemModel==null) {
+                itemModel = itemService.getItemById(id);
+                //将查询到的用户商品信息存入reids并设置过期时间
+                redisTemplate.opsForValue().set("item_"+id,itemModel);
+                redisTemplate.expire("item_"+id,10, TimeUnit.MINUTES);
+                //存入本地缓存
+                cacheService.setCommonCache("item_"+id,itemModel);
+            }
         }
-
         ItemVO itemVO = this.covertVOFromItemModel(itemModel);
         return CommonResultType.create(itemVO);
     }
