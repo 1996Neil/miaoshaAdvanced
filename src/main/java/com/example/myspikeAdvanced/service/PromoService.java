@@ -17,4 +17,11 @@ public interface PromoService {
      * @return  com.example.myspikeAdvanced.service.model.PromoModel
      **/
     PromoModel getPromoById(Integer itemId);
+    /**
+     * 活动发布
+     * @Date 14:39 2021/8/16
+     * @param promoId
+     * @return  void
+     **/
+    void publishPromo(Integer promoId);
 }

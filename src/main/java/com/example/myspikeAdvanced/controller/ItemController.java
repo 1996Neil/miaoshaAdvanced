@@ -7,6 +7,7 @@ import com.example.myspikeAdvanced.mbg.mapper.PromoDOMapper;
 import com.example.myspikeAdvanced.response.CommonResultType;
 import com.example.myspikeAdvanced.service.CacheService;
 import com.example.myspikeAdvanced.service.ItemService;
+import com.example.myspikeAdvanced.service.PromoService;
 import com.example.myspikeAdvanced.service.model.ItemModel;
 import org.joda.time.format.DateTimeFormat;
 import org.springframework.beans.BeanUtils;
@@ -40,6 +41,8 @@ public class ItemController extends BaseController {
     private RedisTemplate redisTemplate;
     @Autowired
     private CacheService cacheService;
+    @Autowired
+    private PromoService promoService;
 
     @PostMapping(value = "/create", consumes = {CONTENT_TYPE_FORMED})
     public CommonResultType createItem(@RequestParam("title") String title,
@@ -125,5 +128,12 @@ public class ItemController extends BaseController {
     public CommonResultType getitem(@RequestParam("id")Integer id){
         PromoDO promoDO = promoDOMapper.selectByByItemId(id);
         return CommonResultType.create(promoDO);
+    }
+
+
+    @GetMapping("/publishPromo")
+    public CommonResultType publishPromo(@RequestParam("id") Integer id) {
+    promoService.publishPromo(id);
+    return CommonResultType.create(null);
     }
 }

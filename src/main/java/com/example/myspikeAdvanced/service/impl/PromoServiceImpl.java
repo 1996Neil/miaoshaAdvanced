@@ -2,11 +2,15 @@ package com.example.myspikeAdvanced.service.impl;
 
 import com.example.myspikeAdvanced.mbg.dao.dataObject.PromoDO;
 import com.example.myspikeAdvanced.mbg.mapper.PromoDOMapper;
+import com.example.myspikeAdvanced.service.ItemService;
 import com.example.myspikeAdvanced.service.PromoService;
+import com.example.myspikeAdvanced.service.model.ItemModel;
 import com.example.myspikeAdvanced.service.model.PromoModel;
+import com.fasterxml.jackson.databind.annotation.JsonAppend;
 import org.joda.time.DateTime;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -22,6 +26,10 @@ import java.math.BigDecimal;
 public class PromoServiceImpl implements PromoService {
     @Autowired
     private PromoDOMapper promoDOMapper;
+    @Autowired
+    private RedisTemplate redisTemplate;
+    @Autowired
+    private ItemService itemService;
     @Override
     public PromoModel getPromoById(Integer itemId) {
         //获取对应商品的秒杀活动信息
@@ -42,6 +50,18 @@ public class PromoServiceImpl implements PromoService {
             promoModel.setStatus(2);
         }
         return promoModel;
+    }
+
+    @Override
+    public void publishPromo(Integer promoId) {
+    //通过活动id获取活动
+        PromoDO promoDO = promoDOMapper.selectByPrimaryKey(promoId);
+        if (promoDO.getItemId()==null || promoDO.getItemId().intValue()==0) {
+            return;
+        }
+        ItemModel itemModel = itemService.getItemById(promoDO.getItemId());
+        redisTemplate.opsForValue().set("promo_item_stock_"+itemModel.getId(),itemModel.getStock());
+
     }
 
     private PromoModel covertFromDataObject(PromoDO promoDO){
