@@ -14,8 +14,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author wangzhe
@@ -35,6 +38,8 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private ValidatorImpl validator;
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     /**
      * 通过用户id得到用户信息
@@ -107,6 +112,17 @@ public class UserServiceImpl implements UserService {
             throw new BusinessException(EmBusinessError.USER_LOGIN_FAIL);
         }
 
+    }
+
+    @Override
+    public UserModel getUserByIdInCache(Integer userId) {
+        UserModel userModel = (UserModel) redisTemplate.opsForValue().get("user_validate_"+userId);
+        if (userModel==null) {
+            userModel = this.getUserById(userId);
+            redisTemplate.opsForValue().set("user_validate_"+userId,userModel);
+            redisTemplate.expire("user_validate_"+userId,10, TimeUnit.MINUTES);
+        }
+        return userModel;
     }
 
     private UserPasswordDO convertPasswordFromModel(UserModel userModel) {

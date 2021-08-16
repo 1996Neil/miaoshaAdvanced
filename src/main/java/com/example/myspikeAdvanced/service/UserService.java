@@ -37,4 +37,12 @@ public interface UserService {
      * @throws BusinessException
      **/
     UserModel validateLogin(String telephone, String EncryptPassword) throws BusinessException;
+
+    /**
+     * 通过缓存获取用户信息
+     * @Date 11:54 2021/8/16
+     * @param userId
+     * @return  com.example.myspikeAdvanced.service.model.UserModel
+     **/
+    UserModel getUserByIdInCache(Integer userId);
 }

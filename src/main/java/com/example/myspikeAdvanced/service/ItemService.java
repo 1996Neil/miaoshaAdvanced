@@ -48,4 +48,11 @@ public interface ItemService {
     boolean decreaseStock(Integer itemId,Integer amount)throws BusinessException;
 
     void increaseSales(Integer itemId,Integer amount)throws BusinessException;
+    /**
+     * item及promo model缓存模型
+     * @Date 11:48 2021/8/16
+     * @param id
+     * @return  com.example.myspikeAdvanced.service.model.ItemModel
+     **/
+    ItemModel getItemByIdInCache(Integer id);
 }
