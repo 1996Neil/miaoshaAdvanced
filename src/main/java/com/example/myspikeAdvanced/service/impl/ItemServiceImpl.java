@@ -152,7 +152,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public boolean asyncDecreaseStock(Integer itemId, Integer amount) {
-        boolean mqResult = mqProducer.asyncReduceStock(itemId, amount.intValue()*-1);
+        boolean mqResult = mqProducer.asyncReduceStock(itemId, amount.intValue());
         return mqResult;
     }
 

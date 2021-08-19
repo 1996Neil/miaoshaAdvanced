@@ -2,6 +2,7 @@ package com.example.myspikeAdvanced.controller;
 
 import com.example.myspikeAdvanced.error.BusinessException;
 import com.example.myspikeAdvanced.error.EmBusinessError;
+import com.example.myspikeAdvanced.mq.MqProducer;
 import com.example.myspikeAdvanced.response.CommonResultType;
 import com.example.myspikeAdvanced.service.OrderService;
 import com.example.myspikeAdvanced.service.model.OrderModel;
@@ -31,6 +32,8 @@ public class OrderController extends BaseController {
     private HttpServletRequest httpServletRequest;
     @Autowired
     private RedisTemplate redisTemplate;
+    @Autowired
+    private MqProducer mqProducer;
 
     /**
      * 创建订单
@@ -54,7 +57,9 @@ public class OrderController extends BaseController {
             throw new BusinessException(EmBusinessError.USER_NOT_LOGIN);
         }
         //创建订单
-        OrderModel orderModel = orderService.createOrder(loginUser.getId(), itemId, amount,promoId);
-        return CommonResultType.create(orderModel);
+        if (!mqProducer.transactionAsyncReduceStock(loginUser.getId(), itemId, amount, promoId)) {
+            throw new BusinessException(EmBusinessError.UNKNOWN_ERROR,"下单失败");
+        }
+        return CommonResultType.create(null);
     }
 }
