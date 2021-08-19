@@ -55,4 +55,20 @@ public interface ItemService {
      * @return  com.example.myspikeAdvanced.service.model.ItemModel
      **/
     ItemModel getItemByIdInCache(Integer id);
+    /**
+     * 异步扣减库存
+     * @Date 16:45 2021/8/19
+     * @param itemId
+     * @param amount
+     * @return  boolean
+     **/
+    boolean asyncDecreaseStock(Integer itemId,Integer amount);
+    /**
+     * 库存回补
+     * @Date 16:49 2021/8/19
+     * @param itemId
+     * @param amount
+     * @return  boolean
+     **/
+    boolean increaseStock(Integer itemId,Integer amount);
 }

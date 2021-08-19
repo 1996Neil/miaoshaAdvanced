@@ -6,12 +6,14 @@ import com.example.myspikeAdvanced.mbg.dao.dataObject.ItemDO;
 import com.example.myspikeAdvanced.mbg.dao.dataObject.ItemStockDO;
 import com.example.myspikeAdvanced.mbg.mapper.ItemDOMapper;
 import com.example.myspikeAdvanced.mbg.mapper.ItemStockDOMapper;
+import com.example.myspikeAdvanced.mq.MqProducer;
 import com.example.myspikeAdvanced.service.ItemService;
 import com.example.myspikeAdvanced.service.PromoService;
 import com.example.myspikeAdvanced.service.model.ItemModel;
 import com.example.myspikeAdvanced.service.model.PromoModel;
 import com.example.myspikeAdvanced.validator.ValidatorImpl;
 import com.example.myspikeAdvanced.validator.ValidatorResult;
+import org.apache.rocketmq.client.producer.SendResult;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -45,6 +47,8 @@ public class ItemServiceImpl implements ItemService {
     private PromoService promoService;
     @Autowired
     private RedisTemplate redisTemplate;
+    @Autowired
+    private MqProducer mqProducer;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -121,13 +125,10 @@ public class ItemServiceImpl implements ItemService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean decreaseStock(Integer itemId, Integer amount) throws BusinessException {
-        //int affectedRow = itemStockDOMapper.decreaseStock(itemId, amount);
         Long result = redisTemplate.opsForValue().increment("promo_item_stock_" + itemId, amount.intValue() * -1);
         if (result>=0) {
-            //更新库存成功
             return true;
         }else {
-            //更新库存成功
             return false;
         }
     }
@@ -147,6 +148,19 @@ public class ItemServiceImpl implements ItemService {
             redisTemplate.expire("item_validate_" + id,10, TimeUnit.MINUTES);
         }
         return itemModel;
+    }
+
+    @Override
+    public boolean asyncDecreaseStock(Integer itemId, Integer amount) {
+        boolean mqResult = mqProducer.asyncReduceStock(itemId, amount.intValue()*-1);
+        return mqResult;
+    }
+
+    @Override
+    public boolean increaseStock(Integer itemId, Integer amount) {
+        redisTemplate.opsForValue().increment("promo_item_stock_" + itemId, amount.intValue());
+        //不考虑redis失败
+        return true;
     }
 
     private ItemModel covertFromDataObject(ItemDO itemDO, ItemStockDO itemStockDO) {
