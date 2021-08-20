@@ -14,6 +14,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.concurrent.*;
 
 /**
  * @author wangzhe
@@ -40,12 +41,20 @@ public class OrderController extends BaseController {
     @Autowired
     private PromoService promoService;
 
+    private ExecutorService executorService;
+
+    public void init() {
+        this.executorService = Executors.newFixedThreadPool(20);
+
+    }
+
     /**
      * 获取秒杀令牌
-     * @Date 13:25 2021/8/20
+     *
      * @param itemId
      * @param promoId
-     * @return  com.example.myspikeAdvanced.response.CommonResultType
+     * @return com.example.myspikeAdvanced.response.CommonResultType
+     * @Date 13:25 2021/8/20
      **/
     @PostMapping(value = "/generateToken", consumes = {CONTENT_TYPE_FORMED})
     public CommonResultType generateToken(@RequestParam("itemId") Integer itemId,
@@ -103,13 +112,29 @@ public class OrderController extends BaseController {
                 throw new BusinessException(EmBusinessError.PARAMETER_VALIDATION_ERROR, "秒杀令牌校验失败");
             }
         }
+        //同步调用线程池的submit方法
+        //拥塞窗口为2的等待队列,用来队列化泄洪
+        Future<Object> future = executorService.submit(new Callable<Object>() {
+            @Override
+            public Object call() throws Exception {
+                //加入库存流水init状态
+                String stockLogId = itemService.initStockLog(itemId, amount);
+                //再去完成对应的下单事务型消息机制
+                if (!mqProducer.transactionAsyncReduceStock(loginUser.getId(), itemId, amount, promoId, stockLogId)) {
+                    throw new BusinessException(EmBusinessError.UNKNOWN_ERROR, "下单失败");
+                }
+                return null;
+            }
+        });
 
-        //加入库存流水init状态
-        String stockLogId = itemService.initStockLog(itemId, amount);
-        //再去完成对应的下单事务型消息机制
-        if (!mqProducer.transactionAsyncReduceStock(loginUser.getId(), itemId, amount, promoId, stockLogId)) {
-            throw new BusinessException(EmBusinessError.UNKNOWN_ERROR, "下单失败");
+        try {
+            future.get();
+        } catch (InterruptedException e) {
+            throw new BusinessException(EmBusinessError.UNKNOWN_ERROR);
+        } catch (ExecutionException e) {
+            throw new BusinessException(EmBusinessError.UNKNOWN_ERROR);
         }
+
         return CommonResultType.create(null);
     }
 }

@@ -47,6 +47,7 @@ public class OrderServiceImpl implements OrderService {
     @Autowired
     private StockLogDOMapper stockLogDOMapper;
 
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public OrderModel createOrder(Integer userId, Integer itemId, Integer amount, Integer promoId,String stockLogId) throws BusinessException {
@@ -95,18 +96,7 @@ public class OrderServiceImpl implements OrderService {
         orderDOMapper.insertSelective(orderDO);
         //加上商品的销量
         itemService.increaseSales(itemId, amount);
-        //等到最近的事务提交了再执行,这里我们把异步化扣减库存的操作放在最后,如果异步化失败了再在redis中回补库存
-        //TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-        //    @Override
-        //    public void afterCommit() {
-                //异步更新库存
-                //boolean mqResult = itemService.asyncDecreaseStock(itemId, amount);
-                //if (!mqResult){
-                //    itemService.increaseStock(itemId,amount);
-                //    throw new BusinessException(EmBusinessError.MQ_SENT_FAILED);
-                //}
-        //    }
-        //});
+
         //设置库存流水状态为成功
         StockLogDO stockLogDO = stockLogDOMapper.selectByPrimaryKey(stockLogId);
         if (stockLogDO==null) {
