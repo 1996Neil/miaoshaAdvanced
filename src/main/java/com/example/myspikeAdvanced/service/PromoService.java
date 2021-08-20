@@ -1,5 +1,6 @@
 package com.example.myspikeAdvanced.service;
 
+import com.example.myspikeAdvanced.error.BusinessException;
 import com.example.myspikeAdvanced.service.model.PromoModel;
 
 /**
@@ -24,4 +25,13 @@ public interface PromoService {
      * @return  void
      **/
     void publishPromo(Integer promoId);
+    /**
+     * 生成秒杀用的令牌
+     * @Date 12:47 2021/8/20
+     * @param promoId 秒杀商品id
+     * @param itemId
+     * @param userId
+     * @return  java.lang.String
+     **/
+    String generateSecondKillToken(Integer promoId,Integer itemId,Integer userId);
 }
