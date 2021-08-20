@@ -4,8 +4,10 @@ import com.example.myspikeAdvanced.error.BusinessException;
 import com.example.myspikeAdvanced.error.EmBusinessError;
 import com.example.myspikeAdvanced.mbg.dao.dataObject.ItemDO;
 import com.example.myspikeAdvanced.mbg.dao.dataObject.ItemStockDO;
+import com.example.myspikeAdvanced.mbg.dao.dataObject.StockLogDO;
 import com.example.myspikeAdvanced.mbg.mapper.ItemDOMapper;
 import com.example.myspikeAdvanced.mbg.mapper.ItemStockDOMapper;
+import com.example.myspikeAdvanced.mbg.mapper.StockLogDOMapper;
 import com.example.myspikeAdvanced.mq.MqProducer;
 import com.example.myspikeAdvanced.service.ItemService;
 import com.example.myspikeAdvanced.service.PromoService;
@@ -22,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -49,6 +52,8 @@ public class ItemServiceImpl implements ItemService {
     private RedisTemplate redisTemplate;
     @Autowired
     private MqProducer mqProducer;
+    @Autowired
+    private StockLogDOMapper stockLogDOMapper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -126,9 +131,13 @@ public class ItemServiceImpl implements ItemService {
     @Transactional(rollbackFor = Exception.class)
     public boolean decreaseStock(Integer itemId, Integer amount) throws BusinessException {
         Long result = redisTemplate.opsForValue().increment("promo_item_stock_" + itemId, amount.intValue() * -1);
-        if (result>=0) {
+        if (result>0) {
             return true;
-        }else {
+        }else if (result==0){
+            //打上库存售罄的标识
+            redisTemplate.opsForValue().set("promo_item_stock_invalid_" + itemId, "true");
+            return true;
+        } else{
             return false;
         }
     }
@@ -161,6 +170,19 @@ public class ItemServiceImpl implements ItemService {
         redisTemplate.opsForValue().increment("promo_item_stock_" + itemId, amount.intValue());
         //不考虑redis失败
         return true;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String initStockLog(Integer itemId, Integer amount) {
+        StockLogDO stockLogDO =new StockLogDO();
+        stockLogDO.setItemId(itemId);
+        stockLogDO.setAmount(amount);
+        stockLogDO.setStockLogId(UUID.randomUUID().toString().replace("-",""));
+        stockLogDO.setStatus(1);
+
+        stockLogDOMapper.insertSelective(stockLogDO);
+        return stockLogDO.getStockLogId();
     }
 
     private ItemModel covertFromDataObject(ItemDO itemDO, ItemStockDO itemStockDO) {

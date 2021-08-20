@@ -22,5 +22,5 @@ public interface OrderService {
      * @param amount 商品数量
      * @return  com.example.myspikeAdvanced.service.model.OrderModel
      **/
-    OrderModel createOrder(Integer userId,Integer itemId,Integer amount,Integer promoId) throws BusinessException;
+    OrderModel createOrder(Integer userId,Integer itemId,Integer amount,Integer promoId,String stockLogId) throws BusinessException;
 }

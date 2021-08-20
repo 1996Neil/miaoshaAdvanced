@@ -4,8 +4,10 @@ import com.example.myspikeAdvanced.error.BusinessException;
 import com.example.myspikeAdvanced.error.EmBusinessError;
 import com.example.myspikeAdvanced.mbg.dao.dataObject.OrderDO;
 import com.example.myspikeAdvanced.mbg.dao.dataObject.SequenceDO;
+import com.example.myspikeAdvanced.mbg.dao.dataObject.StockLogDO;
 import com.example.myspikeAdvanced.mbg.mapper.OrderDOMapper;
 import com.example.myspikeAdvanced.mbg.mapper.SequenceDOMapper;
+import com.example.myspikeAdvanced.mbg.mapper.StockLogDOMapper;
 import com.example.myspikeAdvanced.service.ItemService;
 import com.example.myspikeAdvanced.service.OrderService;
 import com.example.myspikeAdvanced.service.UserService;
@@ -42,10 +44,12 @@ public class OrderServiceImpl implements OrderService {
     private OrderDOMapper orderDOMapper;
     @Autowired
     private SequenceDOMapper sequenceDOMapper;
+    @Autowired
+    private StockLogDOMapper stockLogDOMapper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public OrderModel createOrder(Integer userId, Integer itemId, Integer amount, Integer promoId) throws BusinessException {
+    public OrderModel createOrder(Integer userId, Integer itemId, Integer amount, Integer promoId,String stockLogId) throws BusinessException {
         //1.校验下单状态,下单的商品是否存在,用户是否合法,购买数量是否正确
         ItemModel itemModel = itemService.getItemByIdInCache(itemId);
         //ItemModel itemModel = itemService.getItemById(itemId);
@@ -94,17 +98,24 @@ public class OrderServiceImpl implements OrderService {
         //加上商品的销量
         itemService.increaseSales(itemId, amount);
         //等到最近的事务提交了再执行,这里我们把异步化扣减库存的操作放在最后,如果异步化失败了再在redis中回补库存
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
+        //TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+        //    @Override
+        //    public void afterCommit() {
                 //异步更新库存
-                boolean mqResult = itemService.asyncDecreaseStock(itemId, amount);
+                //boolean mqResult = itemService.asyncDecreaseStock(itemId, amount);
                 //if (!mqResult){
                 //    itemService.increaseStock(itemId,amount);
                 //    throw new BusinessException(EmBusinessError.MQ_SENT_FAILED);
                 //}
-            }
-        });
+        //    }
+        //});
+        //设置库存流水状态为成功
+        StockLogDO stockLogDO = stockLogDOMapper.selectByPrimaryKey(stockLogId);
+        if (stockLogDO==null) {
+            throw new BusinessException(EmBusinessError.UNKNOWN_ERROR);
+        }
+        stockLogDO.setStatus(2);
+        stockLogDOMapper.updateByPrimaryKeySelective(stockLogDO);
         //返回前端
         return orderModel;
     }

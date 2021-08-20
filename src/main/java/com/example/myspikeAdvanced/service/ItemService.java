@@ -71,4 +71,12 @@ public interface ItemService {
      * @return  boolean
      **/
     boolean increaseStock(Integer itemId,Integer amount);
+    /**
+     * 初始化对应的流水
+     * @Date 19:54 2021/8/19
+     * @param itemId
+     * @param amount
+     * @return  void
+     **/
+    String initStockLog(Integer itemId,Integer amount);
 }

@@ -4,6 +4,7 @@ import com.example.myspikeAdvanced.error.BusinessException;
 import com.example.myspikeAdvanced.error.EmBusinessError;
 import com.example.myspikeAdvanced.mq.MqProducer;
 import com.example.myspikeAdvanced.response.CommonResultType;
+import com.example.myspikeAdvanced.service.ItemService;
 import com.example.myspikeAdvanced.service.OrderService;
 import com.example.myspikeAdvanced.service.model.OrderModel;
 import com.example.myspikeAdvanced.service.model.UserModel;
@@ -34,6 +35,8 @@ public class OrderController extends BaseController {
     private RedisTemplate redisTemplate;
     @Autowired
     private MqProducer mqProducer;
+    @Autowired
+    private ItemService itemService;
 
     /**
      * 创建订单
@@ -56,8 +59,14 @@ public class OrderController extends BaseController {
         if (loginUser==null) {
             throw new BusinessException(EmBusinessError.USER_NOT_LOGIN);
         }
-        //创建订单
-        if (!mqProducer.transactionAsyncReduceStock(loginUser.getId(), itemId, amount, promoId)) {
+        //判断库存是否已售罄,若对应的售罄key存在,则直接返回下单失败
+        if (redisTemplate.hasKey("promo_item_stock_invalid_" + itemId)) {
+            throw new BusinessException(EmBusinessError.STOCK_NOT_ENOUGH);
+        }
+        //加入库存流水init状态
+        String stockLogId = itemService.initStockLog(itemId, amount);
+        //再去完成对应的下单事务型消息机制
+        if (!mqProducer.transactionAsyncReduceStock(loginUser.getId(), itemId, amount, promoId,stockLogId)) {
             throw new BusinessException(EmBusinessError.UNKNOWN_ERROR,"下单失败");
         }
         return CommonResultType.create(null);
